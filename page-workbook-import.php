@@ -9,7 +9,7 @@ get_header();
 
 global $wpdb;
 
-function wb_import_data($file_path, $table_name, $sheet, $firstrow = 4){
+function wb_import_excel($file_path, $table_name, $sheet, $firstrow = 4){
 	global $wpdb;
 
 	if (!file_exists($file_path)) {return "File not found.";}
@@ -76,6 +76,9 @@ function wb_import_data($file_path, $table_name, $sheet, $firstrow = 4){
 
 echo '<div style="padding:20px;font-family:Arial;">';
 echo '<h2>Workbook Importer</h2>';
+
+$excel_file = get_template_directory()  . '/csv/Foss - Crisp - Workbook Data 2025_08-07-2025_12-16-43.xlsx';
+
 
 if (isset($_GET['run_import']) && $_GET['run_import'] == 1) {
 	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');

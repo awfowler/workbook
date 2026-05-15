@@ -1,28 +1,43 @@
 <!DOCTYPE html>
-<html <?php language_attributes(); ?> <?php blankslate_schema_type(); ?>>
+<html lang="en">
 <head>
-<meta charset="<?php bloginfo( 'charset' ); ?>">
-<meta name="viewport" content="width=device-width">
-<?php wp_head(); ?>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Sciantec Analytical Proficiency Portal">
+	<meta name="keywords" content="Science,Labs,Technology,">
+	<meta name="author" content="Alex Fowler">
+	<title>Barley Workbook</title>
+	<link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700" rel='stylesheet' type='text/css'>
+	<link href="https://portalukgrain.org/css/bootstrap.min.css" rel="stylesheet">   
+	<style>
+		body {
+			font-family: 'Lato';
+		}
+
+		.fa-btn {
+			margin-right: 6px;
+		}
+	</style>
+	<link href="/css/app.css" rel="stylesheet">
 </head>
-<body <?php body_class(); ?>>
-<?php wp_body_open(); ?>
-<div id="wrapper" class="hfeed">
-<header id="header" role="banner">
-<div id="branding">
-<div id="site-title" itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
-<?php
-if ( is_front_page() || is_home() || is_front_page() && is_home() ) { echo '<h1>'; }
-echo '<a href="' . esc_url( home_url( '/' ) ) . '" title="' . esc_attr( get_bloginfo( 'name' ) ) . '" rel="home" itemprop="url"><span itemprop="name">' . esc_html( get_bloginfo( 'name' ) ) . '</span></a>';
-if ( is_front_page() || is_home() || is_front_page() && is_home() ) { echo '</h1>'; }
-?>
-</div>
-<div id="site-description"<?php if ( !is_single() ) { echo ' itemprop="description"'; } ?>><?php bloginfo( 'description' ); ?></div>
-</div>
-<nav id="menu" role="navigation" aria-label="<?php esc_attr_e( 'Primary Navigation', 'blankslate' ); ?>" itemscope itemtype="https://schema.org/SiteNavigationElement">
-<?php wp_nav_menu( array( 'theme_location' => 'main-menu', 'link_before' => '<span itemprop="name">', 'link_after' => '</span>' ) ); ?>
-<div id="search" role="search" aria-label="<?php esc_attr_e( 'Search', 'blankslate' ); ?>"><?php get_search_form(); ?></div>
-</nav>
-</header>
-<div id="container">
-<main id="content" role="main">
+<body id="app-layout" <?php body_class(); ?>>
+	<header>
+		<div class="container">
+		<h1 class="company">Barley Workbook<br/>
+			<span><a href="mailto:Portal@ukgrain.org" style="color: #b70833;">Portal@ukgrain.org</a></span>
+		</h1>
+		 <a href="http://www.uknir.org/" target="_blank" id="logo">
+			<img src="/uploads/UK_NIR_Grain_Network.jpg" alt="UK Grain Testing Network Ltd" title="New Site"/>
+		</a>
+		</div>
+		<div id="navbar">
+		<div class="container">
+			<nav class="pull-right">
+				<?php wp_nav_menu( array( 'theme_location' => 'main-menu', 'link_before' => '<span itemprop="name">', 'link_after' => '</span>' ) ); ?>
+			</nav>
+		</div>
+		</div>
+	</header>
+	<div id="container">
+		<main id="content" role="main">
