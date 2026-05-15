@@ -31,7 +31,7 @@ function wb_import_excel($excel_file, $table_name, $sheet_name, $firstrow = 4){
 			$analysis_time	 = strtolower(trim($sheet->getCell("B$row")->getValue()));
 			$dumas = $sheet->getCell("C$row")->getValue();
 			$nir = $sheet->getCell("D$row")->getValue();
-			$company= $sheet->getCell("E$row")->getValue();
+			$company= $sheet->getCell("E$row")->getCalculatedValue();
 
 			if (!$analysis_date_raw && !$company) {
 				continue;
@@ -72,7 +72,7 @@ function wb_import_excel($excel_file, $table_name, $sheet_name, $firstrow = 4){
 
 			$sample_id   = $sheet->getCell("A$row")->getValue();
 			$variety     = trim($sheet->getCell("B$row")->getValue());
-			$company     = trim($sheet->getCell("C$row")->getValue());
+			$company     = trim($sheet->getCell("C$row")->getCalculatedValue());
 			$intake      = trim($sheet->getCell("D$row")->getValue());
 			$date_raw    = $sheet->getCell("E$row")->getValue();
 			$dumas       = $sheet->getCell("F$row")->getValue();
