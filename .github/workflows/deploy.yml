@@ -18,4 +18,5 @@ jobs:
           server: orange-yummy-watermelon.f4ee6b05.katapult.cloud
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: public_html/wp-content/themes/my-theme/
+          server-dir: /wp-content/themes/workbook/
+	local-dir: ./
