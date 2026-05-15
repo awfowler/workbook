@@ -15,8 +15,8 @@ jobs:
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: orange-yummy-watermelon.f4ee6b05.katapult.cloud
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /wp-content/themes/workbook/
-          local-dir: ./
+		server: orange-yummy-watermelon.f4ee6b05.katapult.cloud
+		username: ${{ secrets.FTP_USERNAME }}
+		password: ${{ secrets.FTP_PASSWORD }}
+		local-dir: ./
+		server-dir: /wp-content/themes/workbook/
