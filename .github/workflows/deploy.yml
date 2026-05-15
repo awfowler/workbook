@@ -20,3 +20,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
           server-dir: /
+          dangerous-clean-slate: true
