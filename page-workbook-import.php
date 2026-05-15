@@ -149,27 +149,27 @@ echo '<div style="padding:20px;font-family:Arial;">';
 echo '<h2>Workbook Importer</h2>';
 
 $excel_file1 = get_template_directory()  . '/csv/Foss - Crisp - Workbook Data 2025_08-07-2025_12-16-43.xlsx';
-$excel_file1 = get_template_directory()  . '/csv/Foss - Diageo - Workbook Data 2025_09-26-2025_11-14-04.xlsx';
-$excel_file1 = get_template_directory()  . '/csv/Foss - Muntons - Workbook Data 2025_09-26-2025_11-15-13.xls';
-$excel_file1 = get_template_directory()  . '/csv/Foss - Sciantec - Workbook Data 2025.xls';
+$excel_file2 = get_template_directory()  . '/csv/Foss - Diageo - Workbook Data 2025_09-26-2025_11-14-04.xlsx';
+$excel_file3 = get_template_directory()  . '/csv/Foss - Muntons - Workbook Data 2025_09-26-2025_11-15-13.xls';
+$excel_file4 = get_template_directory()  . '/csv/Foss - Sciantec - Workbook Data 2025.xls';
 
 if (isset($_GET['run_import']) && $_GET['run_import'] == 1) {
-	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	$result = wb_import_excel($excel_file1, 'wb_controldata', 'Control data');
 	echo "<p><strong>$result</strong></p>";
-	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	$result = wb_import_excel($excel_file2, 'wb_controldata', 'Control data');
 	echo "<p><strong>$result</strong></p>";
-	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	$result = wb_import_excel($excel_file3, 'wb_controldata', 'Control data');
 	echo "<p><strong>$result</strong></p>";
-	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	$result = wb_import_excel($excel_file4, 'wb_controldata', 'Control data');
 	echo "<p><strong>$result</strong></p>";
 	
-	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	$result = wb_import_excel($excel_file1, 'wb_varietydata', 'Variety data',3);
 	echo "<p><strong>$result</strong></p>";
-	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	$result = wb_import_excel($excel_file2, 'wb_varietydata', 'Variety data',3);
 	echo "<p><strong>$result</strong></p>";
-	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	$result = wb_import_excel($excel_file3, 'wb_varietydata', 'Variety data',3);
 	echo "<p><strong>$result</strong></p>";
-	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	$result = wb_import_excel($excel_file4, 'wb_varietydata', 'Variety data',3);
 	echo "<p><strong>$result</strong></p>";
 } else {
 	echo '<p>Click below to import workbook data.</p>';
