@@ -2,7 +2,7 @@
 /**
  * Template Name: Workbook Importer
  */
-require_once get_template_directory() . '/lib/phpspreadsheet/vendor/autoload.php';
+require_once get_template_directory() . '/PhpSpreadsheet-master/vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 get_header();
