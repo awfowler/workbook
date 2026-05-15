@@ -9,12 +9,12 @@ get_header();
 
 global $wpdb;
 
-function wb_import_excel($file_path, $table_name, $sheet, $firstrow = 4){
+function wb_import_excel($excel_file, $table_name, $sheet, $firstrow = 4){
 	global $wpdb;
 
-	if (!file_exists($file_path)) {return "File not found.";}
+	if (!file_exists($excel_file)) {return "File not found.";}
 
-	$spreadsheet = IOFactory::load($file_path);
+	$spreadsheet = IOFactory::load($excel_file);
 	$sheet = $spreadsheet->getSheetByName($sheet);
 
 	if (!$sheet) {return "Sheet 'Control data' not found.";}
@@ -66,24 +66,111 @@ function wb_import_excel($file_path, $table_name, $sheet, $firstrow = 4){
 					'%s','%d','%f','%f','%s','%s','%f','%d','%f','%d','%s','%s','%d'
 				]
 			);
+			$inserted++;
+		}else		if ($table_name == 'wb_varietydata') {
+
+			$sample_id   = $sheetObj->getCell("A$row")->getValue();
+			$variety     = trim($sheetObj->getCell("B$row")->getValue());
+			$company     = trim($sheetObj->getCell("C$row")->getValue());
+			$intake      = trim($sheetObj->getCell("D$row")->getValue());
+			$date_raw    = $sheetObj->getCell("E$row")->getValue();
+			$dumas       = $sheetObj->getCell("F$row")->getValue();
+			$nir         = $sheetObj->getCell("G$row")->getValue();
+			$comments    = $sheetObj->getCell("H$row")->getValue();
+
+			
+			if (!$sample_id && !$company && !$variety) {
+				continue;
+			}
+
+			if (is_numeric($date_raw)) {
+				$analysis_date = gmdate("Y-m-d", ($date_raw - 25569) * 86400);
+			} else {
+				$analysis_date = date("Y-m-d", strtotime($date_raw));
+			}
+
+			$exists = $wpdb->get_var($wpdb->prepare(
+				"SELECT ID FROM wb_varietydata 
+				 WHERE SampleID = %d 
+				   AND Company = %s 
+				   AND AnalysisDate = %s 
+				   AND Variety = %s
+				 LIMIT 1",
+				$sample_id,
+				$company,
+				$analysis_date,
+				$variety
+			));
+
+			if ($exists) {
+				$skipped++;
+				continue;
+			}
+
+			$wpdb->insert(
+				'wb_varietydata',
+				[
+					'Company'          => $company,
+					'CompanyId'        => null,
+					'SampleID'         => $sample_id,
+					'Variety'          => $variety,
+					'IntakeLocation'   => $intake,
+					'AnalysisDate'     => $analysis_date,
+					'DUMAS'            => $dumas,
+					'NIR'              => $nir,
+					'DATAToggle'       => 0,
+					'OutlierCode'      => null,
+					'Comments'         => $comments,
+					'BiasDUMAS'        => null,
+					'BiasNIR'          => null,
+					'CreateTimesta'    => current_time('Y-m-d'),
+					'ModifyTimesta'    => null,
+					'Counter'          => null,
+					'InitialGroupBias' => 0,
+					'UnbiasedNIR'      => null,
+					'CurrentGroupBi'   => 0,
+					'OriginalDUMA'     => $dumas,
+					'OriginalNIR'      => $nir
+				],
+				[
+					'%s','%d','%d','%s','%s','%s',
+					'%f','%f','%d','%s','%s',
+					'%f','%f','%s','%s','%d','%f','%d','%f','%f'
+				]
+			);
 
 			$inserted++;
 		}
 	}
-
 	return "Imported $excel_file <br/> Using sheet $sheet and skiping to row $firstrow <br> Inserted: $inserted | Skipped (duplicates): $skipped";
 }
 
 echo '<div style="padding:20px;font-family:Arial;">';
 echo '<h2>Workbook Importer</h2>';
 
-$excel_file = get_template_directory()  . '/csv/Foss - Crisp - Workbook Data 2025_08-07-2025_12-16-43.xlsx';
-
+$excel_file1 = get_template_directory()  . '/csv/Foss - Crisp - Workbook Data 2025_08-07-2025_12-16-43.xlsx';
+$excel_file1 = get_template_directory()  . '/csv/Foss - Diageo - Workbook Data 2025_09-26-2025_11-14-04.xlsx';
+$excel_file1 = get_template_directory()  . '/csv/Foss - Muntons - Workbook Data 2025_09-26-2025_11-15-13.xls';
+$excel_file1 = get_template_directory()  . '/csv/Foss - Sciantec - Workbook Data 2025.xls';
 
 if (isset($_GET['run_import']) && $_GET['run_import'] == 1) {
 	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
 	echo "<p><strong>$result</strong></p>";
-
+	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	echo "<p><strong>$result</strong></p>";
+	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	echo "<p><strong>$result</strong></p>";
+	$result = wb_import_excel($excel_file, 'wb_controldata', 'Control data');
+	echo "<p><strong>$result</strong></p>";
+	
+	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	echo "<p><strong>$result</strong></p>";
+	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	echo "<p><strong>$result</strong></p>";
+	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	echo "<p><strong>$result</strong></p>";
+	$result = wb_import_excel($excel_file, 'wb_varietydata', 'Variety data',3);
+	echo "<p><strong>$result</strong></p>";
 } else {
 	echo '<p>Click below to import workbook data.</p>';
 	echo '<a href="?run_import=1" style="padding:10px 14px;background:#0073aa;color:#fff;text-decoration:none;">Run Import</a>';
