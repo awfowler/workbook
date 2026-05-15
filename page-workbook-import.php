@@ -9,18 +9,19 @@ get_header();
 
 global $wpdb;
 
-function wb_import_excel($excel_file, $table_name, $sheet, $firstrow = 4){
+function wb_import_excel($excel_file, $table_name, $sheet_name, $firstrow = 4){
 	global $wpdb;
 
-	if (!file_exists($excel_file)) {return "File not found.";}
+	if (!file_exists($excel_file)) {
+		return "File not found.";
+	}
 
 	$spreadsheet = IOFactory::load($excel_file);
-	$sheet = $spreadsheet->getSheetByName($sheet);
+	$sheet = $spreadsheet->getSheetByName($sheet_name);
 
-	if (!$sheet) {return "Sheet 'Control data' not found.";}
+	if (!$sheet) {return "Sheet '{$sheet_name}' not found.";}
 
 	$highestRow = $sheet->getHighestRow();
-
 	$inserted = 0;
 	$skipped = 0;
 
@@ -69,14 +70,14 @@ function wb_import_excel($excel_file, $table_name, $sheet, $firstrow = 4){
 			$inserted++;
 		}else		if ($table_name == 'wb_varietydata') {
 
-			$sample_id   = $sheetObj->getCell("A$row")->getValue();
-			$variety     = trim($sheetObj->getCell("B$row")->getValue());
-			$company     = trim($sheetObj->getCell("C$row")->getValue());
-			$intake      = trim($sheetObj->getCell("D$row")->getValue());
-			$date_raw    = $sheetObj->getCell("E$row")->getValue();
-			$dumas       = $sheetObj->getCell("F$row")->getValue();
-			$nir         = $sheetObj->getCell("G$row")->getValue();
-			$comments    = $sheetObj->getCell("H$row")->getValue();
+			$sample_id   = $sheet->getCell("A$row")->getValue();
+			$variety     = trim($sheet->getCell("B$row")->getValue());
+			$company     = trim($sheet->getCell("C$row")->getValue());
+			$intake      = trim($sheet->getCell("D$row")->getValue());
+			$date_raw    = $sheet->getCell("E$row")->getValue();
+			$dumas       = $sheet->getCell("F$row")->getValue();
+			$nir         = $sheet->getCell("G$row")->getValue();
+			$comments    = $sheet->getCell("H$row")->getValue();
 
 			
 			if (!$sample_id && !$company && !$variety) {
@@ -131,11 +132,6 @@ function wb_import_excel($excel_file, $table_name, $sheet, $firstrow = 4){
 					'CurrentGroupBi'   => 0,
 					'OriginalDUMA'     => $dumas,
 					'OriginalNIR'      => $nir
-				],
-				[
-					'%s','%d','%d','%s','%s','%s',
-					'%f','%f','%d','%s','%s',
-					'%f','%f','%s','%s','%d','%f','%d','%f','%f'
 				]
 			);
 
