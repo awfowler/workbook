@@ -74,7 +74,7 @@ function wb_import_data($file_path, $table_name, $sheet, $firstrow = 4){
 	return "Done. Inserted: $inserted | Skipped (duplicates): $skipped";
 }
 
-echo '<div style='padding:20px;font-family:Arial;'>';
+echo '<div style="padding:20px;font-family:Arial;">';
 echo '<h2>Workbook Importer</h2>';
 
 if (isset($_GET['run_import']) && $_GET['run_import'] == 1) {
