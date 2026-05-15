@@ -71,7 +71,7 @@ function wb_import_excel($file_path, $table_name, $sheet, $firstrow = 4){
 		}
 	}
 
-	return "Done. Inserted: $inserted | Skipped (duplicates): $skipped";
+	return "Imported $excel_file <br/> Using sheet $sheet and skiping to row $firstrow <br> Inserted: $inserted | Skipped (duplicates): $skipped";
 }
 
 echo '<div style="padding:20px;font-family:Arial;">';
