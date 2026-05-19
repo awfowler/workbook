@@ -72,6 +72,55 @@ function variety_data($date, $group = 'English Spring'){
 	return $html;
 }
 function variety_data_company(){
+    global $wpdb;
+	$sql = 'SELECT ROUND(DUMAS / 0.05) * 0.05 AS RoundedValue, COUNT(*) AS Frequency FROM wb_varietydata WHERE DUMAS IS NOT NULL GROUP BY RoundedValue ORDER BY RoundedValue';
+	$results = $wpdb->get_results($sql);	
+	$labels = [];
+	$data = [];	
+	foreach($results as $row) {	
+	    $labels[] = $row->RoundedValue;
+	    $data[] = $row->Frequency;
+	}
+	$maxValue = max($data);
+    $yMax = ceil($maxValue * 1.1);  
+    $yMax = (ceil($maxValue / 10) * 10) + 10;
+	
+	$labels_json = json_encode($labels);
+	$data_json = json_encode($data);
+
+	$html='<canvas id="myChart" width="400" height="200"></canvas>';
+	$html.="
+<script>
+var labels = ".$labels_json.";
+var data = ".$data_json.";
+var yMax = ".$yMax."
+
+var ctx = document.getElementById('myChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Frequency of BiasNIR',
+            data: data,
+            backgroundColor: 'purple'
+        }]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    min: 0,
+                    max: yMax
+                }
+            }]
+        }
+    }
+});
+</script>
+";
+	return $html;
 
 }
 
@@ -81,7 +130,7 @@ function variety_data_company(){
 <div style="padding:20px;font-family:Arial;">
 	<?php 
 		print variety_data(date('d F Y'),'English Spring'); 
-		print variety_data_company();
+		print '<div>'.variety_data_company().'</div>';
 	
 	?>
 </div>
