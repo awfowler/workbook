@@ -72,7 +72,7 @@ function variety_data($date, $group = 'English Spring'){
 	return $html;
 }
 function variety_data_company(){
-    global $wpdb;
+	global $wpdb;
 	$sql = 'SELECT ROUND(DUMAS / 0.05) * 0.05 AS RoundedValue, COUNT(*) AS Frequency FROM wb_varietydata WHERE DUMAS IS NOT NULL GROUP BY RoundedValue ORDER BY RoundedValue';
 	$results = $wpdb->get_results($sql);	
 	$labels = [];
@@ -82,20 +82,20 @@ function variety_data_company(){
 	    $data[] = $row->Frequency;
 	}
 	$maxValue = max($data);
-    $yMax = ceil($maxValue * 1.1);  
-    $yMax = (ceil($maxValue / 10) * 10) + 10;
+	$yMax = ceil($maxValue * 1.1);  
+	$yMax = (ceil($maxValue / 10) * 10) + 10;
 	
 	$labels_json = json_encode($labels);
 	$data_json = json_encode($data);
 
-	$html='<canvas id="myChart" width="400" height="200"></canvas>';
+	$html='<canvas id="chartVD" width="400" height="200"></canvas>';
 	$html.="
 <script>
 var labels = ".$labels_json.";
 var data = ".$data_json.";
 var yMax = ".$yMax."
 
-var ctx = document.getElementById('myChart').getContext('2d');
+var ctx = document.getElementById('chartVD').getContext('2d');
 
 new Chart(ctx, {
     type: 'bar',
@@ -125,13 +125,80 @@ new Chart(ctx, {
 }
 
 
+function dumas_control(){
+	global $wpdb;
+	$endDate = '2025-07-07';
+	$startDate = date('Y-m-d', strtotime($endDate . ' -9 days'));
+	$sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate BETWEEN \''.$startDate.'\' AND \''.$endDate.'\' GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
+	$results = $wpdb->get_results($sql);
+	$dates = [];
+	$series = [];	
+	foreach($results as $row) {	
+		$dates[$row->AnalysisDate] = $row->AnalysisDate;
+    		$series[$row->Company][$row->AnalysisDate] = (float)$row->DUMAS;
+	}
+	ksort($dates);	
+	$labels = array_values($dates);	
+	$datasets = [];	
+	$colors = ['red','blue','green','purple','orange'];
+	$i = 0;	
+	foreach ($series as $company => $values) {
+	    $data = [];	
+	    foreach ($labels as $date) {
+	        $data[] = $values[$date] ?? null;
+	    }	
+	    $datasets[] = [
+	        'label' => $company,
+	        'data' => $data,
+	        'borderColor' => $colors[$i % count($colors)],
+	        'fill' => false
+	    ];	
+	    $i++;
+	}
+	$labels_json = json_encode($labels);
+	$datasets_json = json_encode($datasets);
+	$html='<canvas id="chartDC" width="400" height="200"></canvas>';
+	$html .= "
+	<script>
+	
+	var labels = $labels_json;
+	var datasets = $datasets_json;
+	
+	var ctx = document.getElementById('chartDC').getContext('2d');
+	
+	new Chart(ctx, {
+	    type: 'line',
+	    data: {
+	        labels: labels,
+	        datasets: datasets
+	    },
+	    options: {
+	        responsive: true,
+	        elements: {
+	            line: {
+	                tension: 0.2
+	            }
+	        },
+	        scales: {
+	            yAxes: [{
+	                ticks: {
+	                    beginAtZero: false
+	                }
+	            }]
+	        }
+	    }
+	});
+	
+</script>";
+	return $html;
+}
 
 ?>
 <div style="padding:20px;font-family:Arial;">
 	<?php 
 		print variety_data(date('d F Y'),'English Spring'); 
 		print '<div>'.variety_data_company().'</div>';
-	
+		print '<div>'.dumas_control().'</div>';
 	?>
 </div>
 
