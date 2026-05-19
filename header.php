@@ -11,13 +11,8 @@
 	<link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700" rel='stylesheet' type='text/css'>
 	<link href="https://portalukgrain.org/css/bootstrap.min.css" rel="stylesheet">   
 	<style>
-		body {
-			font-family: 'Lato';
-		}
-
-		.fa-btn {
-			margin-right: 6px;
-		}
+		body {font-family: 'Lato';}
+		.fa-btn {margin-right: 6px;}
 	</style>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 	<link href="/css/app.css" rel="stylesheet">

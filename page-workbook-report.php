@@ -9,7 +9,8 @@ global $wpdb;
 
 
 function variety_data($date, $group = 'English Spring'){
-	$html.='<h2>'.esc_html($group).' Report</h2>';
+	global $wpdb;
+	$html='<h2>'.esc_html($group).' Report</h2>';
 	$html.='<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;">';
 	$html.='<thead style="background:#f2f2f2;">';
 	$html.='	<tr>';
@@ -70,10 +71,22 @@ function variety_data($date, $group = 'English Spring'){
 	$html.='</table>';
 	return $html;
 }
+function variety_data_company(){
+
+}
+
+
+
 ?>
 <div style="padding:20px;font-family:Arial;">
-	<?php print variety_data(date('d F Y')); ?>
+	<?php 
+		print variety_data(date('d F Y'),'English Spring'); 
+		print variety_data_company();
+	
+	?>
 </div>
+
 <?php
+
 echo '</div>';
 get_footer();
