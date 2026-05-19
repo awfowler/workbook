@@ -19,6 +19,7 @@
 			margin-right: 6px;
 		}
 	</style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 	<link href="/css/app.css" rel="stylesheet">
 </head>
 <body id="app-layout" <?php body_class(); ?>>
