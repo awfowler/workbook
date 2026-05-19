@@ -127,9 +127,13 @@ new Chart(ctx, {
 
 function dumas_control(){
 	global $wpdb;
-	$endDate = '2025-07-07';
+	$endDate = '2025-07-28';
 	$startDate = date('Y-m-d', strtotime($endDate . ' -9 days'));
 	$sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate BETWEEN \''.$startDate.'\' AND \''.$endDate.'\' GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
+		$sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate  GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
+	
+	print $sql;
+	
 	$results = $wpdb->get_results($sql);
 	$dates = [];
 	$series = [];	
@@ -157,7 +161,7 @@ function dumas_control(){
 	}
 	$labels_json = json_encode($labels);
 	$datasets_json = json_encode($datasets);
-	$html='<canvas id="chartDC" width="400" height="200"></canvas>';
+	$html='<h1>DUMAS Control (Raw Data)</h1><canvas id="chartDC" width="400" height="200"></canvas>';
 	$html .= "
 	<script>
 	
@@ -193,12 +197,110 @@ function dumas_control(){
 	return $html;
 }
 
+function mean($arr) {
+	return count($arr) ? array_sum($arr) / count($arr) : 0;
+}
+
+function stddev($arr) {
+	if (count($arr) < 2) return 0;
+	$m = mean($arr);
+	$sum = 0;
+	foreach ($arr as $v) {
+		$sum += pow($v - $m, 2);
+	}
+	return sqrt($sum / (count($arr) - 1));
+}
+
+function dumas_control_report($endDate = '2025-07-07') {
+	global $wpdb;
+	$startDate = date('Y-m-d', strtotime($endDate . ' -9 days'));
+	$sql = 'SELECT Company, DUMAS, AnalysisDate FROM wb_varietydata WHERE DUMAS IS NOT NULL';
+
+	$rows = $wpdb->get_results($sql);
+	$companyData = [];
+	foreach ($rows as $r) {
+		$company = $r->Company;
+		if (!isset($companyData[$company])) {
+			$companyData[$company] = [
+				'initial' => [],
+				'harvest' => []
+			];
+		}
+		// if ($r->AnalysisDate < $startDate) {
+			$companyData[$company]['initial'][] = $r->DUMAS;
+		// }
+		// if ($r->AnalysisDate >= $startDate && $r->AnalysisDate <= $endDate) {
+			$companyData[$company]['harvest'][] = $r->DUMAS;
+		// }
+	}
+	
+	$html = '<h1>DUMAS Control nitrogen % (as is)</h1>';
+	$html.='<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;">';
+	$html.='    <thead style="background:#f2f2f2;">';
+	$html .= '  <tr>
+				        <th>Company</th>
+				        <th>Initial Mean</th>
+				        <th>Initial SD</th>
+				        <th>Initial Count</th>
+				        <th>Harvest Mean</th>
+				        <th>Harvest SD</th>
+				        <th>Harvest Count</th>
+				        <th>Correction</th>
+				        <th>Current Mean</th>
+				        <th>Current Count</th>
+				        </tr>';
+	$html.='</thead>';			        
+	$allInitial = [];
+	$allHarvest = [];
+	foreach ($companyData as $company => $data) {
+		$iMean = mean($data['initial']);
+		$iSD   = stddev($data['initial']);
+		$iCnt  = count($data['initial']);
+		$hMean = mean($data['harvest']);
+		$hSD   = stddev($data['harvest']);
+		$hCnt  = count($data['harvest']);
+		$correction = $hMean - $iMean;
+		$html .= '<tr>
+			<td>'.$company.'</td>
+			<td>'.round($iMean,3).'</td>
+			<td>'.round($iSD,3).'</td>
+			<td>'.$iCnt.'</td>
+			<td>'.round($hMean,3).'</td>
+			<td>'.round($hSD,3).'</td>
+			<td>'.$hCnt.'</td>
+			<td>'.round($correction,3).'</td>
+			<td>'.round($hMean,3).'</td>
+			<td>'.$hCnt.'</td>
+		</tr>';
+		$allInitial = array_merge($allInitial, $data['initial']);
+		$allHarvest = array_merge($allHarvest, $data['harvest']);
+	}
+
+	$aiMean = mean($allInitial);
+	$ahMean = mean($allHarvest);
+	$html .= '<tr style="font-weight:bold;background:#eee;">
+		<td>ALL</td>
+		<td>'.round($aiMean,3).'</td>
+		<td>'.round(stddev($allInitial),3).'</td>
+		<td>'.count($allInitial).'</td>
+		<td>'.round($ahMean,3).'</td>
+		<td>'.round(stddev($allHarvest),3).'</td>
+		<td>'.count($allHarvest).'</td>
+		<td>'.round($ahMean - $aiMean,3).'</td>
+		<td>'.round($ahMean,3).'</td>
+		<td>'.count($allHarvest).'</td>
+	</tr>';
+	$html .= '</table>';
+	return $html;
+}
+
 ?>
 <div style="padding:20px;font-family:Arial;">
 	<?php 
 		print variety_data(date('d F Y'),'English Spring'); 
 		print '<div>'.variety_data_company().'</div>';
 		print '<div>'.dumas_control().'</div>';
+		print '<div>'.dumas_control_report().'</div>';
 	?>
 </div>
 
