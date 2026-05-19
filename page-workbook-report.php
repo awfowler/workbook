@@ -8,7 +8,7 @@ get_header();
 global $wpdb;
 
 
-function variety_data($group = 'English Spring', $date=date('d F Y')){
+function variety_data($date, $group = 'English Spring'){
 	$html.='<div style="padding:20px;font-family:Arial;">';
 	$html.='	<h2>UK NIR Grain Network - Barley Workbook Report</h2>';
 	$html.='	<h3>Report ID:</h3>';
@@ -53,7 +53,6 @@ function variety_data($group = 'English Spring', $date=date('d F Y')){
 	}
 }
 ?>
-
 <div style="padding:20px;font-family:Arial;">
 	<h2><?php echo esc_html($group); ?> Report</h2>
 	<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;">
@@ -69,7 +68,7 @@ function variety_data($group = 'English Spring', $date=date('d F Y')){
 			</tr>
 		</thead>
 		<tbody>
-			<?php print variety_data(); ?>
+			<?php print variety_data(date('d F Y')); ?>
 		</tbody>
 	</table>
 </div>
