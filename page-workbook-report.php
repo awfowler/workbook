@@ -73,55 +73,58 @@ function variety_data($date, $group = 'English Spring'){
 }
 function variety_data_company(){
 	global $wpdb;
-	$sql = 'SELECT ROUND(DUMAS / 0.05) * 0.05 AS RoundedValue, COUNT(*) AS Frequency FROM wb_varietydata WHERE DUMAS IS NOT NULL GROUP BY RoundedValue ORDER BY RoundedValue';
-	$results = $wpdb->get_results($sql);	
+
+	$results = $wpdb->get_results(
+		'SELECT ROUND(DUMAS / 0.05) * 0.05 AS RoundedValue, COUNT(*) AS Frequency 
+		 FROM wb_varietydata 
+		 WHERE DUMAS IS NOT NULL 
+		 GROUP BY RoundedValue 
+		 ORDER BY RoundedValue'
+	);
+
 	$labels = [];
-	$data = [];	
-	foreach($results as $row) {	
-	    $labels[] = $row->RoundedValue;
-	    $data[] = $row->Frequency;
+	$data = [];
+
+	foreach($results as $row){
+		$labels[] = $row->RoundedValue;
+		$data[] = $row->Frequency;
 	}
-	$maxValue = max($data);
-	$yMax = ceil($maxValue * 1.1);  
-	$yMax = (ceil($maxValue / 10) * 10) + 10;
-	
-	$labels_json = json_encode($labels);
-	$data_json = json_encode($data);
 
-	$html='<canvas id="chartVD" width="400" height="200"></canvas>';
-	$html.="
-<script>
-var labels = ".$labels_json.";
-var data = ".$data_json.";
-var yMax = ".$yMax."
+	$yMax = (ceil(max($data) / 10) * 10) + 10;
 
-var ctx = document.getElementById('chartVD').getContext('2d');
+	return '
+	<canvas id="chartVD" width="400" height="200"></canvas>
 
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Frequency of BiasNIR',
-            data: data,
-            backgroundColor: 'purple'
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    min: 0,
-                    max: yMax
-                }
-            }]
-        }
-    }
-});
-</script>
-";
-	return $html;
+	<script>
+	(function () {
 
+		new Chart(
+			document.getElementById("chartVD").getContext("2d"),
+			{
+				type: "bar",
+				data: {
+					labels: ' . json_encode($labels) . ',
+					datasets: [{
+						label: "Frequency of BiasNIR",
+						data: ' . json_encode($data) . ',
+						backgroundColor: "purple"
+					}]
+				},
+				options: {
+					scales: {
+						yAxes: [{
+							ticks: {
+								beginAtZero: true,
+								max: ' . $yMax . '
+							}
+						}]
+					}
+				}
+			}
+		);
+
+	})();
+	</script>';
 }
 
 
@@ -161,6 +164,7 @@ function dumas_control(){
 	$html='<h1>DUMAS Control (Raw Data)</h1><canvas id="chartDCRD" width="400" height="200"></canvas>';
 	$html .= "
 	<script>
+	(() => {
 	var DCctx = document.getElementById('chartDCRD').getContext('2d');
 	new Chart(DCctx, {
 	    type: 'line',
@@ -184,7 +188,7 @@ function dumas_control(){
 	        }
 	    }
 	});
-	
+	})();
 </script>";
 	return $html;
 }
@@ -204,56 +208,38 @@ function stddev($arr) {
 }
 
 function dumas_control_report_old($endDate = '2025-07-07') {
-
     global $wpdb;
-
     $startDate = date('Y-m-d', strtotime($endDate . ' -9 days'));
-
-    $sql = $wpdb->prepare("
-        SELECT Company, AnalysisDate, DUMAS
-        FROM wb_controldata
-        WHERE DUMAS IS NOT NULL
-        AND AnalysisDate <= %s
-        ORDER BY Company, AnalysisDate
-    ", $endDate);
+    $sql = $wpdb->prepare("SELECT Company, AnalysisDate, DUMAS FROM wb_controldatan WHERE DUMAS IS NOT NULL AND AnalysisDate <= %s ORDER BY Company, AnalysisDate", $endDate);
 
     $results = $wpdb->get_results($sql);
-
     $data = [];
-
     foreach ($results as $r) {
-
         $c = $r->Company;
-
         if (!isset($data[$c])) {
             $data[$c] = [
                 'initial' => [],
                 'harvest' => []
             ];
         }
-
         if ($r->AnalysisDate < $startDate) {
             $data[$c]['initial'][] = $r->DUMAS;
         } else {
             $data[$c]['harvest'][] = $r->DUMAS;
         }
     }
-
     $html = "<h2>DUMAS Control Report</h2>";
     $html .= "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;width:100%'>";
     $html .= "
     <tr>
         <th>Company</th>
-
         <th>Initial Harvest Mean</th>
         <th>Initial Harvest Std Dev</th>
         <th>Initial Harvest Correction</th>
         <th>Initial Harvest Count</th>
-
         <th>Harvest Mean</th>
         <th>Harvest Std Dev</th>
         <th>Harvest Count</th>
-
         <th>Current Running Mean</th>
         <th>Current Correction</th>
         <th>Current Harvest Count</th>
@@ -261,32 +247,24 @@ function dumas_control_report_old($endDate = '2025-07-07') {
 
     $allInitial = [];
     $allHarvest = [];
-
     foreach ($data as $company => $d) {
-
         $iMean = mean($d['initial']);
         $iSD   = stddev($d['initial']);
         $hMean = mean($d['harvest']);
         $hSD   = stddev($d['harvest']);
         $hCnt  = count($d['harvest']);
         $correction = 0;
-
         $currentMean = $hMean;
-
         $currentCorrection = $correction;
-
         $html .= "<tr>
             <td>$company</td>
-
             <td>".round($iMean,3)."</td>
             <td>".round($iSD,3)."</td>
             <td>".round($correction,3)."</td>
             <td>0</td>
-
             <td>".round($hMean,3)."</td>
             <td>".round($hSD,3)."</td>
             <td>$hCnt</td>
-
             <td>".round($currentMean,3)."</td>
             <td>".round($currentCorrection,3)."</td>
             <td>0</td>
@@ -301,23 +279,18 @@ function dumas_control_report_old($endDate = '2025-07-07') {
 
     $html .= "<tr style='font-weight:bold;background:#eee'>
         <td>ALL</td>
-
         <td>".round($iMeanAll,3)."</td>
         <td>".round(stddev($allInitial),3)."</td>
         <td>".round($hMeanAll - $iMeanAll,3)."</td>
         <td>".count($allInitial)."</td>
-
         <td>".round($hMeanAll,3)."</td>
         <td>".round(stddev($allHarvest),3)."</td>
         <td>".count($allHarvest)."</td>
-
         <td>".round($hMeanAll,3)."</td>
         <td>".round($hMeanAll - $iMeanAll,3)."</td>
         <td>".count($allHarvest)."</td>
     </tr>";
-
     $html .= "</table>";
-
     return $html;
 }
 
@@ -416,16 +389,19 @@ function dumas_control_chart($endDate = '2025-08-31') {
 	global $wpdb;
 	$startDate = '2025-06-22';
 	$rows = $wpdb->get_results($wpdb->prepare("SELECT AnalysisDate, AnalysisTime, DUMAS FROM wb_controldata WHERE AnalysisDate BETWEEN %s AND %s AND DUMAS IS NOT NULL ORDER BY AnalysisDate ASC",$startDate,$endDate));
+
 	$data = [];
-	foreach ($rows as $r) {
-		$date = date('d/m/Y', strtotime($r->AnalysisDate));
+	foreach ($rows as $r) {		$date = date('d/m/Y', strtotime($r->AnalysisDate));
+
 		if (!isset($data[$date])) {
-			$data[$date] = ['am' => null,'pm' => null];
+			$data[$date] = ['am' => null, 'pm' => null];
 		}
+
 		$time = strtolower($r->AnalysisTime);
 		$data[$date][$time] = (float)$r->DUMAS;
 	}
 	ksort($data);
+
 	$labels = [];
 	$amData = [];
 	$pmData = [];
@@ -434,22 +410,24 @@ function dumas_control_chart($endDate = '2025-08-31') {
 		$amData[] = $vals['am'] ?? null;
 		$pmData[] = $vals['pm'] ?? null;
 	}
+
+	// $labelsJs = json_encode($labels);
+	// $amJs = json_encode($amData);
+	// $pmJs = json_encode($pmData);
+
 	return '
 	<h2>DUMAS Control Chart</h2>
 	<canvas id="chartDC" height="120"></canvas>
 	<script>
-	(() => {
-
-		const DCCtargetLine = {
-			id: "targetLine",
-			afterDatasetsDraw(chart) {
-				const {
-					ctx,
-					chartArea: {left, right},
-					scales: {y}
-				} = chart;
-				const yPos = y.getPixelForValue(1.5);
-
+	(function () {
+		var ctx = document.getElementById("chartDC").getContext("2d");
+		var targetLine = {
+			afterDatasetsDraw: function(chart) {
+				var ctx = chart.ctx;
+				var left = chart.chartArea.left;
+				var right = chart.chartArea.right;
+				var yScale = chart.scales["y-axis-0"];
+				var yPos = yScale.getPixelForValue(1.5);
 				ctx.save();
 				ctx.beginPath();
 				ctx.strokeStyle = "gold";
@@ -461,63 +439,136 @@ function dumas_control_chart($endDate = '2025-08-31') {
 			}
 		};
 
-		new Chart(
-			document.getElementById("chartDC"),
-			{
-				type: "line",
-				data: {
-					labels: '.json_encode($labels).',
-					datasets: [
-						{
-							label: "AM Control",
-							data: '.json_encode($amData).',
-							borderColor: "purple",
-							backgroundColor: "purple",
-							pointStyle: "rect",
-							pointRadius: 6,
-							showLine: false,
-							spanGaps: true
-						},
-						{
-							label: "PM Control",
-							data: '.json_encode($pmData).',
-							borderColor: "purple",
-							backgroundColor: "purple",
-							pointStyle: "rect",
-							pointRadius: 6,
-							showLine: false,
-							spanGaps: true
-						}
-					]
-				},
-
-				options: {
-					responsive: true,
-
-					scales: {
-						y: {
+		new Chart(ctx, {
+			type: "line",
+			data: {
+				labels: ' . json_encode($labels) . ',
+				datasets: [
+					{
+						label: "AM Control",
+						data: ' . json_encode($amData) . ',
+						borderColor: "purple",
+						backgroundColor: "purple",
+						pointStyle: "rect",
+						pointRadius: 6,
+						showLine: false,
+						spanGaps: true
+					},
+					{
+						label: "PM Control",
+						data: ' . json_encode($pmData) . ',
+						borderColor: "purple",
+						backgroundColor: "purple",
+						pointStyle: "rect",
+						pointRadius: 6,
+						showLine: false,
+						spanGaps: true
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					yAxes: [{
+						ticks: {
 							min: 1.4,
 							max: 1.6
 						}
-					}
-				},
-
-				plugins: [DCCtargetLine]
-			}
-		);
+					}]
+				}
+			},
+			plugins: [targetLine]
+		});
 
 	})();
-	</script>
-	';
+	</script>';
 }
+
+// Can you produce the graph and the table. The graph has lines on it in a colour representing the company eg, sciantec and might go between say 0.04 and -0.04 The table looks like this :- Statistics,Samples,% Outlier,Min,Max,SD,Bias,SEP,RMSEO,% +/- 0.04, % +/- NIR,380,0,1.21,2.31,1.79,.17,-0.07,0.35,0.36,78,98 DUMAs,380,,1.21,2.38,1.8,.18,,,,, Do you need a copy of the variety data?
+function bias_bar_chart() {
+    global $wpdb;
+
+    $rows = $wpdb->get_results("
+        SELECT ID, Company, AnalysisDate, NIR, DUMAS
+        FROM wb_varietydata
+        WHERE NIR IS NOT NULL AND DUMAS IS NOT NULL
+        ORDER BY AnalysisDate ASC, ID ASC
+    ");
+
+    $labels = [];
+    $data = [];
+    $colors = [];
+
+    foreach ($rows as $r) {
+
+        $bias = (float)$r->NIR - (float)$r->DUMAS;
+
+        $labels[] = $r->AnalysisDate . ' #' . $r->ID;
+        $data[] = $bias;
+
+        // colour by sign (optional but useful)
+        $colors[] = ($bias >= 0) ? 'rgba(0, 123, 255, 0.6)' : 'rgba(220, 53, 69, 0.6)';
+    }
+
+    return '
+    <h2>Bias Control (Bar Chart)</h2>
+    <canvas id="biasBarChart" height="120"></canvas>
+
+    <script>
+    (function () {
+
+        new Chart(document.getElementById("biasBarChart"), {
+            type: "bar",
+            data: {
+                labels: ' . json_encode($labels) . ',
+                datasets: [{
+                    label: "Bias (NIR - DUMAS)",
+                    data: ' . json_encode($data) . ',
+                    backgroundColor: ' . json_encode($colors) . ',
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            display: false // hides clutter for 380+ points
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            suggestedMin: -0.16,
+                            suggestedMax: 0.08
+                        }
+                    }]
+                },
+
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return "Bias: " + tooltipItem.yLabel;
+                        }
+                    }
+                }
+            }
+        });
+
+    })();
+    </script>';
+}
+
+
 ?>
 <div style="padding:20px;font-family:Arial;">
 	<?php 
 		print variety_data(date('d F Y'),'English Spring'); 
         print '<div>'.variety_data_company().'</div>';
         print '<div>'.dumas_control().'</div>';
-		// print '<div>'.dumas_control_report().'</div>';
-		// print '<div>'.dumas_control_chart().'</div>';
+		print '<div>'.dumas_control_report().'</div>';
+		print '<div>'.dumas_control_chart().'</div>';
+		print '<div>'.bias_bar_chart().'</div>';
 	?>
 </div>
 
