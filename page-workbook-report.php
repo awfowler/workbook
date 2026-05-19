@@ -129,11 +129,9 @@ function dumas_control(){
 	global $wpdb;
 	$endDate = '2025-07-28';
 	$startDate = date('Y-m-d', strtotime($endDate . ' -9 days'));
-	$sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate BETWEEN \''.$startDate.'\' AND \''.$endDate.'\' GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
-		$sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate  GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
-	
-	print $sql;
-	
+	// $sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate BETWEEN \''.$startDate.'\' AND \''.$endDate.'\' GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
+	$sql = 'SELECT Company, AnalysisDate, AVG(DUMAS) AS DUMAS FROM wb_varietydata WHERE AnalysisDate  GROUP BY Company, AnalysisDate ORDER BY AnalysisDate ASC';	
+
 	$results = $wpdb->get_results($sql);
 	$dates = [];
 	$series = [];	
@@ -159,22 +157,16 @@ function dumas_control(){
 	    ];	
 	    $i++;
 	}
-	$labels_json = json_encode($labels);
-	$datasets_json = json_encode($datasets);
+
 	$html='<h1>DUMAS Control (Raw Data)</h1><canvas id="chartDCRD" width="400" height="200"></canvas>';
 	$html .= "
 	<script>
-	
-	var labels = $labels_json;
-	var datasets = $datasets_json;
-	
-	var ctx = document.getElementById('chartDCRD').getContext('2d');
-	
-	new Chart(ctx, {
+	var DCctx = document.getElementById('chartDCRD').getContext('2d');
+	new Chart(DCctx, {
 	    type: 'line',
 	    data: {
-	        labels: labels,
-	        datasets: datasets
+	        labels: ".json_encode($labels).",
+	        datasets: ".json_encode($datasets)."
 	    },
 	    options: {
 	        responsive: true,
@@ -330,18 +322,8 @@ function dumas_control_report_old($endDate = '2025-07-07') {
 }
 
 function dumas_control_report($endDate = '2025-07-07') {
-
     global $wpdb;
-
-    
-    $rows = $wpdb->get_results($wpdb->prepare("
-        SELECT Company, AnalysisDate, DUMAS
-        FROM wb_controldata
-        WHERE DUMAS IS NOT NULL
-        AND AnalysisDate <= %s
-        ORDER BY Company, AnalysisDate
-    ", $endDate));
-
+    $rows = $wpdb->get_results($wpdb->prepare("SELECT Company, AnalysisDate, DUMAS FROM wb_controldata WHERE DUMAS IS NOT NULL AND AnalysisDate <= %s ORDER BY Company, AnalysisDate", $endDate));
     $company = [];
 
     foreach ($rows as $r) {
@@ -350,29 +332,21 @@ function dumas_control_report($endDate = '2025-07-07') {
 
     $initial = [];
     $allInitial = [];
-
     foreach ($company as $c => $vals) {
-
         $initial[$c] = array_slice($vals, 0, 10);
-
         $allInitial = array_merge($allInitial, $initial[$c]);
     }
 
     $allInitialMean = mean($allInitial);
-
     $flatHarvest = [];
-
     foreach ($company as $vals) {
         $flatHarvest = array_merge($flatHarvest, $vals);
     }
 
     $hMean = mean($flatHarvest);
     $hSD   = stddev($flatHarvest);
-
     $clean = [];
-
     foreach ($company as $c => $vals) {
-
         foreach ($vals as $v) {
 
             if (abs($v - $hMean) <= (3 * $hSD)) {
@@ -381,26 +355,18 @@ function dumas_control_report($endDate = '2025-07-07') {
         }
     }
 
-    // -----------------------
-    // OUTPUT
-    // -----------------------
     $html = "<h2>DUMAS Control Report</h2>";
-
     $html .= "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;width:100%'>";
-
     $html .= "
     <tr>
         <th>Company</th>
-
         <th>Initial Harvest Mean</th>
         <th>Initial Harvest SD</th>
         <th>Initial Harvest Correction</th>
         <th>Initial Count</th>
-
         <th>Harvest Mean</th>
         <th>Harvest SD</th>
         <th>Harvest Count</th>
-
         <th>Current Running Mean</th>
         <th>Current Correction</th>
         <th>Current Count</th>
@@ -420,16 +386,12 @@ function dumas_control_report($endDate = '2025-07-07') {
         $hSD   = stddev($h);
         $hCnt  = count($h);
 
-
         $last10 = array_slice($h, -10);
         $runningMean = mean($last10);
 
-
         $currentCorrection = $allInitialMean - $runningMean;
-
         $html .= "<tr>
             <td>{$c}</td>
-
             <td>".round($iMean,3)."</td>
             <td>".round($iSD,3)."</td>
             <td>".round($allInitialMean - $iMean,3)."</td>
@@ -450,128 +412,103 @@ function dumas_control_report($endDate = '2025-07-07') {
     return $html;
 }
 
-
 function dumas_control_chart($endDate = '2025-08-31') {
+	global $wpdb;
+	$startDate = '2025-06-22';
+	$rows = $wpdb->get_results($wpdb->prepare("SELECT AnalysisDate, AnalysisTime, DUMAS FROM wb_controldata WHERE AnalysisDate BETWEEN %s AND %s AND DUMAS IS NOT NULL ORDER BY AnalysisDate ASC",$startDate,$endDate));
+	$data = [];
+	foreach ($rows as $r) {
+		$date = date('d/m/Y', strtotime($r->AnalysisDate));
+		if (!isset($data[$date])) {
+			$data[$date] = ['am' => null,'pm' => null];
+		}
+		$time = strtolower($r->AnalysisTime);
+		$data[$date][$time] = (float)$r->DUMAS;
+	}
+	ksort($data);
+	$labels = [];
+	$amData = [];
+	$pmData = [];
+	foreach ($data as $date => $vals) {
+		$labels[] = $date;
+		$amData[] = $vals['am'] ?? null;
+		$pmData[] = $vals['pm'] ?? null;
+	}
+	return '
+	<h2>DUMAS Control Chart</h2>
+	<canvas id="chartDC" height="120"></canvas>
+	<script>
+	(() => {
 
-    global $wpdb;
+		const DCCtargetLine = {
+			id: "targetLine",
+			afterDatasetsDraw(chart) {
+				const {
+					ctx,
+					chartArea: {left, right},
+					scales: {y}
+				} = chart;
+				const yPos = y.getPixelForValue(1.5);
 
-    $startDate = '2025-06-22';
+				ctx.save();
+				ctx.beginPath();
+				ctx.strokeStyle = "gold";
+				ctx.lineWidth = 2;
+				ctx.moveTo(left, yPos);
+				ctx.lineTo(right, yPos);
+				ctx.stroke();
+				ctx.restore();
+			}
+		};
 
-    $rows = $wpdb->get_results($wpdb->prepare("
-        SELECT AnalysisDate, AnalysisTime, DUMAS
-        FROM wb_controldata
-        WHERE AnalysisDate BETWEEN %s AND %s
-        AND DUMAS IS NOT NULL
-        ORDER BY AnalysisDate ASC
-    ", $startDate, $endDate));
+		new Chart(
+			document.getElementById("chartDC"),
+			{
+				type: "line",
+				data: {
+					labels: '.json_encode($labels).',
+					datasets: [
+						{
+							label: "AM Control",
+							data: '.json_encode($amData).',
+							borderColor: "purple",
+							backgroundColor: "purple",
+							pointStyle: "rect",
+							pointRadius: 6,
+							showLine: false,
+							spanGaps: true
+						},
+						{
+							label: "PM Control",
+							data: '.json_encode($pmData).',
+							borderColor: "purple",
+							backgroundColor: "purple",
+							pointStyle: "rect",
+							pointRadius: 6,
+							showLine: false,
+							spanGaps: true
+						}
+					]
+				},
 
-    $data = [];
+				options: {
+					responsive: true,
 
-    foreach ($rows as $r) {
+					scales: {
+						y: {
+							min: 1.4,
+							max: 1.6
+						}
+					}
+				},
 
-        $date = date('d/m/Y', strtotime($r->AnalysisDate));
+				plugins: [DCCtargetLine]
+			}
+		);
 
-        if (!isset($data[$date])) {
-            $data[$date] = ['am' => null, 'pm' => null];
-        }
-
-        $time = strtolower($r->AnalysisTime);
-
-        $data[$date][$time] = (float)$r->DUMAS;
-    }
-    ksort($data);
-
-    $labels = [];
-    $amData = [];
-    $pmData = [];
-
-    foreach ($data as $date => $vals) {
-
-        $labels[] = $date;
-        $amData[] = $vals['am'] ?? null;
-        $pmData[] = $vals['pm'] ?? null;
-    }
-
-    $labels_json = json_encode($labels);
-    $am_json = json_encode($amData);
-    $pm_json = json_encode($pmData);
-
-    $target = 1.50;
-
-    return "
-<canvas id='chartDC' height='120'></canvas>
-
-<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
-
-<script>
-const labels = $labels_json;
-const amData = $am_json;
-const pmData = $pm_json;
-
-const target = $target;
-
-const targetLine = {
-    id: 'targetLine',
-    afterDatasetsDraw(chart) {
-
-        const {ctx, chartArea: {left, right}, scales: {y}} = chart;
-
-        const yPos = y.getPixelForValue(target);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.strokeStyle = 'gold';
-        ctx.lineWidth = 2;
-        ctx.moveTo(left, yPos);
-        ctx.lineTo(right, yPos);
-        ctx.stroke();
-        ctx.restore();
-    }
-};
-
-new Chart(document.getElementById('chartDC'), {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: [
-
-            {
-                label: 'AM Control',
-                data: amData,
-                borderColor: 'purple',
-                backgroundColor: 'purple',
-                pointStyle: 'rect',
-                pointRadius: 6,
-                showLine: false,
-                spanGaps: true
-            },
-
-            {
-                label: 'PM Control',
-                data: pmData,
-                borderColor: 'purple',
-                backgroundColor: 'purple',
-                pointStyle: 'rect',
-                pointRadius: 6,
-                showLine: false,
-                spanGaps: true
-            }
-
-        ]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                min: 1.4,
-                max: 1.6
-            }
-        }
-    },
-    plugins: [targetLine]
-});
-</script>
-";
+	})();
+	</script>
+	';
 }
 ?>
 <div style="padding:20px;font-family:Arial;">
@@ -579,8 +516,8 @@ new Chart(document.getElementById('chartDC'), {
 		print variety_data(date('d F Y'),'English Spring'); 
         print '<div>'.variety_data_company().'</div>';
         print '<div>'.dumas_control().'</div>';
-		print '<div>'.dumas_control_report().'</div>';
-		print '<div>'.dumas_control_chart().'</div>';
+		// print '<div>'.dumas_control_report().'</div>';
+		// print '<div>'.dumas_control_chart().'</div>';
 	?>
 </div>
 
