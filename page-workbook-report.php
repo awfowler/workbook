@@ -656,11 +656,19 @@ function nir_dumas_scatter_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	$sumY = array_sum($y);
 	$sumXY = 0;
 	$sumXX = 0;
+	$meanY = $sumY / $count;
+	$ssTot = 0;
+	$ssRes = 0;
 	for ($i = 0; $i < $count; $i++) {
 		$sumXY += $x[$i] * $y[$i];
 		$sumXX += $x[$i] * $x[$i];
+		$predictedY = ($slope * $x[$i]) + $intercept;	
+		$ssTot += pow(($y[$i] - $meanY), 2);	
+		$ssRes += pow(($y[$i] - $predictedY), 2);
 	}
-
+	$rsq = 1 - ($ssRes / $ssTot);	
+	$rsq = round($rsq, 4);
+	
 	$slope = (($count * $sumXY) - ($sumX * $sumY)) / (($count * $sumXX) - ($sumX * $sumX));
 	$intercept = ($sumY - ($slope * $sumX)) / $count;
 	$minX = min($x);
@@ -669,6 +677,9 @@ function nir_dumas_scatter_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		['x' => $minX, 'y' => ($slope * $minX) + $intercept],
 		['x' => $maxX, 'y' => ($slope * $maxX) + $intercept]
 	];
+	
+	
+	
 
 	$html="<canvas id=\"nirDumasScatter\"></canvas>
 	<script>
@@ -716,6 +727,23 @@ function nir_dumas_scatter_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		});
 	})();
 	</script>";
+	
+	$html.='';
+	$html.='<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;">';
+	$html.='<thead style="background:#f2f2f2;">';
+	$html.='	<tr>';
+	$html.='		<th>Slope</th>';
+	$html.='		<th>Intercept</th>';
+	$html.='		<th>RSQ</th>';
+	$html.='	</tr>';
+	$html.='</thead>';
+	$html.='<thead style="background:#f2f2f2;">';
+	$html.='	<tr>';
+	$html.='		<td>'.$slope.'</td>';
+	$html.='		<td>'.$intercept.'</td>';
+	$html.='		<td>'.$rsq.'</td>';
+	$html.='	</tr>';
+	$html.='</thead>';
 	return $html;
 }
 
