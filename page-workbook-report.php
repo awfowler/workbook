@@ -498,14 +498,15 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	$labels = [];
 	$data = [];
 	$colors = [];
-	$nir[];
-	$dumas[];
+	$nir = [];
+	$dumas = [];
 	
 	foreach ($rows as $r) {
 		$labels[] = $r->AnalysisDate . ' #' . $r->ID;
+		$nir[] = $r->NIR;
+		$dumas[] = $r->Dumas;
 		$data[] = $r->bias;
 		$colors[] = $companies[$r->CompanyId]['Colour'];
-		$nir[] = $r->NIR;		
 	}
 	$countNIR = count($nir);
 	if($countNIR > 0){
