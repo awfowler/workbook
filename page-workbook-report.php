@@ -534,7 +534,7 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		$percent08 = 0;
 	}
 	
-	if(isset($minNIR)){
+	if(count($data)>0){
 		$html.='
 		<h2>Bias Control (Bar Chart)</h2>
 		<canvas id="biasBarChart" height="120"></canvas>
@@ -581,8 +581,8 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		$html.='Unable to find any data for '.$variety.'<br>';	
 	}
 	
-	$vdata[$variety]['NIR']=array('samples' => $countNIR, 'outlier' => 0, 'min' => min($nir) ,'max' => max($nir), 'mean'  => mean($nir),'sd' => stddev($nir),'bias' => $bias,'sep' => $sep,'rmsep' =>  $rmsep,'percent04' => $percent04, 'percent08' => $percent04);
-	$vdata[$variety]['DUMAS']=array('samples' => count($dumas) , 'outlier' => 0, 'min' => min($dumas),'max' => max($dumas), 'mean'  => mean($dumas),'sd' => stddev($dumas));
+	$vdata[$variety]['NIR']=array('samples' => $countNIR, 'outlier' => '?', 'min' => min($nir) ,'max' => max($nir), 'mean'  => mean($nir),'sd' => stddev($nir),'bias' => $bias,'sep' => $sep,'rmsep' =>  $rmsep,'percent04' => $percent04, 'percent08' => $percent04);
+	$vdata[$variety]['DUMAS']=array('samples' => count($dumas) , 'outlier' => '?', 'min' => min($dumas),'max' => max($dumas), 'mean'  => mean($dumas),'sd' => stddev($dumas));
 	
 	
 	$html.='<h2>Observation by Analysis Date</h2>';
@@ -599,7 +599,7 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	$html.='		<th>Bias</th>';
 	$html.='		<th>SEP</th>';
 	$html.='		<th>RMSEO</th>';
-	$html.='		<th>% ± 0.04</th>';
+	$html.='		<th>% +/- 0.04</th>';
 	$html.='		<th>% +/- 0.08</th>';
 	$html.='	</tr>';
 	$html.='</thead>';
@@ -647,8 +647,8 @@ DUMAs,380,,1.21,2.38,1.8,.18,,,,,
 <div style="padding:20px;font-family:Arial;">
 	<?php 
 		print variety_data(date('d F Y'),'English Spring'); 
-        print '<div>'.variety_data_company().'</div>';
-        print '<div>'.dumas_control().'</div>';
+        	print '<div>'.variety_data_company().'</div>';
+        	print '<div>'.dumas_control().'</div>';
 		print '<div>'.dumas_control_report().'</div>';
 		print '<div>'.dumas_control_chart().'</div>';
 		print '<div>'.bias_bar_chart().'</div>';
