@@ -202,7 +202,7 @@ function mean($arr) {
 }
 
 function stddev($arr) {
-	if (count($arr) < 2) return 0;
+	if (!is_countable($arr) || count($arr) < 2) return 0;
 	$m = mean($arr);
 	$sum = 0;
 	foreach ($arr as $v) {
@@ -500,11 +500,12 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	$colors = [];
 	$nir = [];
 	$dumas = [];
+	$html = '';
 	
 	foreach ($rows as $r) {
 		$labels[] = $r->AnalysisDate . ' #' . $r->ID;
 		$nir[] = $r->NIR;
-		$dumas[] = $r->Dumas;
+		$dumas[] = $r->DUMAS;
 		$data[] = $r->bias;
 		$colors[] = $companies[$r->CompanyId]['Colour'];
 	}
@@ -534,7 +535,7 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	}
 	
 	if(isset($minNIR)){
-		return '
+		$html.='
 		<h2>Bias Control (Bar Chart)</h2>
 		<canvas id="biasBarChart" height="120"></canvas>
 		<script>
@@ -580,7 +581,7 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		$html.='Unable to find any data for '.$variety.'<br>';	
 	}
 	
-	$vdata[$variety]['NIR']=array('samples' => $countNIR, 'outlier' => 0, 'min' => min($nir) ,'max' => max($nir), 'mean'  => mean($nir),'sd' => stddev($sd),'bias' => $bias,'sep' => $sep,'rmsep' =>  $rmsep,'percent04' => $percent04, 'percent08' => $percent04);
+	$vdata[$variety]['NIR']=array('samples' => $countNIR, 'outlier' => 0, 'min' => min($nir) ,'max' => max($nir), 'mean'  => mean($nir),'sd' => stddev($nir),'bias' => $bias,'sep' => $sep,'rmsep' =>  $rmsep,'percent04' => $percent04, 'percent08' => $percent04);
 	$vdata[$variety]['DUMAS']=array('samples' => count($dumas) , 'outlier' => 0, 'min' => min($dumas),'max' => max($dumas), 'mean'  => mean($dumas),'sd' => stddev($dumas));
 	
 	
