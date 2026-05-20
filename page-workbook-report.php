@@ -662,12 +662,10 @@ function nir_dumas_scatter_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	for ($i = 0; $i < $count; $i++) {
 		$sumXY += $x[$i] * $y[$i];
 		$sumXX += $x[$i] * $x[$i];
-		$predictedY = ($slope * $x[$i]) + $intercept;	
-		$ssTot += pow(($y[$i] - $meanY), 2);	
-		$ssRes += pow(($y[$i] - $predictedY), 2);
+		
+		
 	}
-	$rsq = 1 - ($ssRes / $ssTot);	
-	$rsq = round($rsq, 4);
+	
 	
 	$slope = (($count * $sumXY) - ($sumX * $sumY)) / (($count * $sumXX) - ($sumX * $sumX));
 	$intercept = ($sumY - ($slope * $sumX)) / $count;
@@ -677,9 +675,13 @@ function nir_dumas_scatter_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		['x' => $minX, 'y' => ($slope * $minX) + $intercept],
 		['x' => $maxX, 'y' => ($slope * $maxX) + $intercept]
 	];
-	
-	
-	
+	for ($i = 0; $i < $count; $i++) {
+		$predictedY = ($slope * $x[$i]) + $intercept;	
+		$ssTot += pow(($y[$i] - $meanY), 2);	
+		$ssRes += pow(($y[$i] - $predictedY), 2);
+	}
+	$rsq = 1 - ($ssRes / $ssTot);	
+	$rsq = round($rsq, 4);
 
 	$html="<canvas id=\"nirDumasScatter\"></canvas>
 	<script>
