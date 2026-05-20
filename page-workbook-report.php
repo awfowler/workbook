@@ -483,7 +483,6 @@ function dumas_control_chart($endDate = '2025-08-31') {
 			},
 			plugins: [targetLine]
 		});
-
 	})();
 	</script>';
 }
@@ -581,7 +580,7 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 		$html.='Unable to find any data for '.$variety.'<br>';	
 	}
 	
-	$vdata[$variety]['NIR']=array('samples' => $countNIR, 'outlier' => '?', 'min' => min($nir) ,'max' => max($nir), 'mean'  => mean($nir),'sd' => stddev($nir),'bias' => $bias,'sep' => $sep,'rmsep' =>  $rmsep,'percent04' => $percent04, 'percent08' => $percent04);
+	$vdata[$variety]['NIR']=array('samples' => $countNIR, 'outlier' => '?', 'min' => min($nir) ,'max' => max($nir), 'mean'  => mean($nir),'sd' => stddev($nir),'bias' => $bias,'sep' => $sep,'rmsep' =>  $rmsep,'percent04' => $percent04, 'percent08' => $percent08);
 	$vdata[$variety]['DUMAS']=array('samples' => count($dumas) , 'outlier' => '?', 'min' => min($dumas),'max' => max($dumas), 'mean'  => mean($dumas),'sd' => stddev($dumas));
 	
 	
@@ -606,7 +605,7 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	$html.='<tbody>';
 	$html.='	<tr>';
 	$html.='		<th>NIR</th>';
-	$html.='		<th>Samples</th>';
+	$html.='		<th>'.$vdata[$variety]['NIR']['samples'].'</th>';
 	$html.='		<th></th>';
 	$html.='		<th>'.$vdata[$variety]['NIR']['min'].'</th>';
 	$html.='		<th>'.$vdata[$variety]['NIR']['max'].'</th>';
@@ -637,11 +636,88 @@ function bias_bar_chart($variety = 'SY Kingsbarn (F) (Winter)') {
 	
 	return $html;
 }
-/*
-Statistics,Samples,% Outlier,Min,Max,SD,Bias,SEP,RMSEO,% ± 0.04, % ±
-NIR,380,0,1.21,2.31,1.79,.17,-0.07,0.35,0.36,78,98
-DUMAs,380,,1.21,2.38,1.8,.18,,,,, 
-*/
+
+
+function nir_dumas_scatter_chart($variety = 'SY Kingsbarn (F) (Winter)') {
+	global $wpdb;
+	$sql = "SELECT ID, NIR, DUMAS FROM wb_varietydata WHERE NIR IS NOT NULL AND DUMAS IS NOT NULL AND Variety='".$variety."' ORDER BY AnalysisDate ASC, ID ASC";
+	$rows = $wpdb->get_results($sql);
+	$points = [];
+	$x = [];
+	$y = [];
+	foreach ($rows as $r) {
+		$points[] = ['x' => (float)$r->NIR, 'y' => (float)$r->DUMAS];
+		$x[] = (float)$r->NIR;
+		$y[] = (float)$r->DUMAS;
+	}
+
+	$count = count($x);
+	$sumX = array_sum($x);
+	$sumY = array_sum($y);
+	$sumXY = 0;
+	$sumXX = 0;
+	for ($i = 0; $i < $count; $i++) {
+		$sumXY += $x[$i] * $y[$i];
+		$sumXX += $x[$i] * $x[$i];
+	}
+
+	$slope = (($count * $sumXY) - ($sumX * $sumY)) / (($count * $sumXX) - ($sumX * $sumX));
+	$intercept = ($sumY - ($slope * $sumX)) / $count;
+	$minX = min($x);
+	$maxX = max($x);
+	$regressionLine = [
+		['x' => $minX, 'y' => ($slope * $minX) + $intercept],
+		['x' => $maxX, 'y' => ($slope * $maxX) + $intercept]
+	];
+
+	$html="<canvas id=\"nirDumasScatter\"></canvas>
+	<script>
+	(function () {
+		var ctx = document.getElementById('nirDumasScatter');
+		new Chart(ctx, {
+			type: 'scatter',
+			data: {
+				datasets: [
+					{
+						label: 'Samples',
+						data: ".json_encode($points).",
+						backgroundColor: 'blue',
+						pointStyle: 'rect',
+						pointRadius: 5
+					},
+					{
+						label: 'Regression',
+						data: ".json_encode($regressionLine).",
+						type: 'line',
+						borderColor: 'black',
+						borderWidth: 2,
+						pointRadius: 0,
+						fill: false
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					x: {
+						title: {
+							display: true,
+							text: 'NIR N'
+						}
+					},
+					y: {
+						title: {
+							display: true,
+							text: 'DUMAS N'
+						}
+					}
+				}
+			}
+		});
+	})();
+	</script>";
+	return $html;
+}
 
 ?>
 <div style="padding:20px;font-family:Arial;">
@@ -652,6 +728,7 @@ DUMAs,380,,1.21,2.38,1.8,.18,,,,,
 		print '<div>'.dumas_control_report().'</div>';
 		print '<div>'.dumas_control_chart().'</div>';
 		print '<div>'.bias_bar_chart().'</div>';
+		print '<div>'.nir_dumas_scatter_chart().'</div>';
 	?>
 </div>
 
